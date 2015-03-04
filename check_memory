@@ -1,0 +1,72 @@
+#!/usr/local/bin/node
+
+var cvalue = 100;
+var wvalue = 100;
+
+//parse input values//
+try{
+    var Re = new RegExp("\-w *([0-9]{1,2})%", "g");
+    wvalue = Re.exec( process.argv.join(''));
+    if( wvalue && Array.isArray( wvalue)) wvalue = parseInt(wvalue[1]);
+
+    Re = new RegExp("\-c *([0-9]{1,2})%", "g");
+    cvalue = Re.exec( process.argv.join(''));
+    if( cvalue && Array.isArray( cvalue)) cvalue = parseInt(cvalue[1]);
+
+    console.log('wvalue, ', wvalue);
+    console.log('cvalue, ', cvalue);
+    if( !wvalue ) throw new Error('-w value read error!');
+    if( !cvalue ) throw new Error('-c value read error!');
+}catch( exception ){
+    process.stdout.write('MEMMORY UNKNOWN - ');
+    process.stdout.write( exception );
+    process.stdout.write('\n');
+}
+
+//execute shell command and process results//
+var exec = require('child_process').exec;
+var child = exec("free -b -o | head -n 2 | awk '/[0-9]+/ { print $2 \";\" $3 \";\" $4 \";\" $5 \";\"  $6 }' ",{},
+  function (error, stdout, stderr) {
+    	if( error ){
+		    process.stdout.write('MEMMORY UNKNOWN - ');
+        	process.stdout.write( stderr );
+	        process.stdout.write('\n');
+
+        }else if(stdout){
+            var MEG = 1000000;
+            var parts =  stdout.split(';');
+            var total = parseInt(parts[0]);
+            var used  = parseInt(parts[1]);
+            var free  = parseInt(parts[2]);
+            var percentageUsed = Math.floor( ((used /total)*100) );
+            var appendage = "Total: #total#M; Used: #used#M; Free: #free#M; Percentage Used: #perused#%"
+                .replace('#total#', Math.round(total/MEG))
+                .replace('#used#', Math.round(used/MEG))
+                .replace('#free#', Math.round(free/MEG))
+                .replace('#perused#', percentageUsed);
+            if(percentageUsed < wvalue && percentageUsed > -1){
+                process.stdout.write('MEMMORY OK - ');
+                process.stdout.write( appendage );
+                process.stdout.write('\n');
+            }else if(percentageUsed > wvalue && percentageUsed < cvalue){
+                process.stdout.write('MEMMORY WARNING - ');
+                process.stdout.write( appendage );
+                process.stdout.write('\n');
+            }else if( percentageUsed > cvalue && percentageUsed <100){
+                process.stdout.write('MEMMORY CRITICAL - ');
+                process.stdout.write( appendage );
+                process.stdout.write('\n');
+            }
+                //console.log('stdout: ' + stdout);
+        }else
+            throw new Error('memory check data not available for reading');
+    	
+});
+
+//handle uncaught exceptions//
+process.on('uncaughtException', function (err) {
+ 	console.log(err);
+	process.stdout.write('MEMORY UNKNOWN - ');
+	process.stdout.write(err);
+	process.stdout.write('\n');
+});
