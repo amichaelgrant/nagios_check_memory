@@ -13,8 +13,6 @@ try{
     cvalue = Re.exec( process.argv.join(''));
     if( cvalue && Array.isArray( cvalue)) cvalue = parseInt(cvalue[1]);
 
-    console.log('wvalue, ', wvalue);
-    console.log('cvalue, ', cvalue);
     if( !wvalue ) throw new Error('-w value read error!');
     if( !cvalue ) throw new Error('-c value read error!');
 }catch( exception ){
@@ -28,9 +26,9 @@ var exec = require('child_process').exec;
 var child = exec("free -b -o | head -n 2 | awk '/[0-9]+/ { print $2 \";\" $3 \";\" $4 \";\" $5 \";\"  $6 }' ",{},
   function (error, stdout, stderr) {
     	if( error ){
-		    process.stdout.write('MEMMORY UNKNOWN - ');
-        	process.stdout.write( stderr );
-	        process.stdout.write('\n');
+	    process.stdout.write('MEMMORY UNKNOWN - ');
+	    process.stdout.write( stderr );
+	    process.stdout.write('\n');
 
         }else if(stdout){
             var MEG = 1000000;
@@ -57,7 +55,6 @@ var child = exec("free -b -o | head -n 2 | awk '/[0-9]+/ { print $2 \";\" $3 \";
                 process.stdout.write( appendage );
                 process.stdout.write('\n');
             }
-                //console.log('stdout: ' + stdout);
         }else
             throw new Error('memory check data not available for reading');
     	
